@@ -1,0 +1,3 @@
+APP_DATASOURCE_URL=localhost:5432/postgres
+APP_DATASOURCE_USER=postgres
+APP_DATASOURCE_PASSWORD=postgres
