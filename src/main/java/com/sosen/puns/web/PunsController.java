@@ -1,25 +1,26 @@
 package com.sosen.puns.web;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.sosen.puns.model.ChatMessage;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Controller
+@RequestMapping("/app")
+@CrossOrigin
 public class PunsController {
 
-    private final SimpMessagingTemplate template;
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Autowired
-    public WebSocketController(SimpMessagingTemplate template){
-        this.template = template;
-    }
-
-    @MessageMapping("/send/message")
-    public void onReceivedMesage(String message){
-        this.template.convertAndSend("/chat",  new SimpleDateFormat("HH:mm:ss").format(new Date())+"- "+message);
+    @MessageMapping("/message")
+    @SendTo("/app/chatMessage")
+    public ChatMessage message(ChatMessage chatMessage) {
+        chatMessage.setDate(LocalDateTime.now().format(formatter));
+        return chatMessage;
     }
 }
