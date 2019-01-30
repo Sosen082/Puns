@@ -7,14 +7,16 @@ import {FormsModule} from "@angular/forms";
 import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {TranslateHttpLoader} from '@ngx-translate/http-loader';
 import {HttpClient, HttpClientModule} from "@angular/common/http";
-import { AlertComponent } from './alert/alert.component';
+import {AlertComponent} from './alert/alert.component';
 import {AlertService} from "../core/alert.service";
 import {LanguageService} from "../core/language.service";
+import {GameComponent} from './game/game.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    AlertComponent
+    AlertComponent,
+    GameComponent
   ],
   imports: [
     BrowserModule,

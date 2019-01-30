@@ -1,5 +1,15 @@
 {
   "title": "Puns - Game",
+  "login": {
+    "title": "Input your username",
+    "username": "Username",
+    "error_required": "Field is required",
+    "error_minlength": "Field is too small [min. {{quantity}} characters]",
+    "submit": "Play"
+  },
+  "game": {
+    "password": "Actual passwrd: "
+  },
   "language": {
     "en": "english",
     "pl": "polish"

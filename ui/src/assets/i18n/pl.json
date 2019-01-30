@@ -1,5 +1,15 @@
 {
   "title": "Kalambury - gra",
+  "login": {
+    "title": "Wpisz swoją nazwę użytkownika",
+    "username": "Nazwa użytkownika",
+    "error_required": "Pole jest wymagane",
+    "error_minlength": "Pole jest zbyt krótkie [min. {{quantity}} znaki]",
+    "submit": "Graj"
+  },
+  "game": {
+    "password": "Aktualne hasło: "
+  },
   "language": {
     "en": "angielski",
     "pl": "polski"

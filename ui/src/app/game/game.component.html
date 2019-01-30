@@ -1,0 +1,91 @@
+<app-alert></app-alert>
+
+<div class="container container-login" *ngIf="!isOnline">
+  <div class="row">
+    <div class="offset-3"></div>
+    <div class="col-md-6">
+      <div class="logo">
+        <img class="img-fluid rounded mx-auto d-block" alt="Puns Logo" src="assets/img/logo.svg">
+      </div>
+
+      <form name="form" #f="ngForm" (ngSubmit)="f.form.valid && login()" novalidate class="login-form rounded">
+        <span class="login-form-title">{{ 'login.title' | translate }}</span>
+
+        <div class="form-group">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text"><i class="fa fa-user"></i></span>
+            </div>
+
+            <input type="text"
+                   id="username"
+                   class="form-control"
+                   name="username"
+                   placeholder="{{ 'login.username' | translate }}"
+                   [(ngModel)]="userName"
+                   #username="ngModel"
+                   [ngClass]="{ 'is-invalid': f.submitted && username.invalid }"
+                   required="required"
+                   autocomplete="username"
+                   minlength="3"
+                   maxlength="50"
+                   autofocus/>
+          </div>
+
+          <div *ngIf="f.submitted && username.invalid" class="invalid-input-text-center">
+            <div *ngIf="username.errors?.required">{{ 'login.error_required' | translate }}</div>
+            <div *ngIf="username.errors?.minlength">{{ 'login.error_minlength' | translate: {'quantity': '3'} }}</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <button type="submit" class="btn btn-block btn-primary">
+            <i class="fa fa-sign-in"></i>
+            <span> {{ 'login.submit' | translate }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="offset-3"></div>
+  </div>
+</div>
+
+<div class="container" [hidden]="!isOnline">
+  <div class="pb-2 mt-4 mb-2 border-bottom">
+    <h2>{{ 'game.password' | translate }} {{password}}</h2>
+  </div>
+
+  <div class="jumbotron">
+    <div class="row">
+      <div class="col-lg-8">
+        <canvas #canvas id="draw"></canvas>
+        <canvas #canvas></canvas>
+      </div>
+
+      <div class="col-lg-4">
+        <form class="form-inline" style="margin-top: 20px;">
+          <div class="form-group">
+            <label for="name">Message:</label>
+            <input type="text" id="name" name="name" class="form-control" [(ngModel)]="message.content"/>
+          </div>
+          <button id="send" class="btn btn-default" type="button" (click)="sendMessage()">Send</button>
+        </form>
+
+        <table id="conversation" class="table table-striped" style="margin-top: 20px;">
+          <thead>
+          <tr>
+            <th>Messages</th>
+          </tr>
+          </thead>
+          <tbody *ngFor="let message of messages">
+          <tr>
+            <td>{{message.userName}} {{message.content}}</td>
+          </tr>
+          </tbody>
+        </table>
+
+
+      </div>
+    </div>
+  </div>
+</div>
