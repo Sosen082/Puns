@@ -1,12 +1,12 @@
 package com.sosen.puns.model;
 
-public class ChatMessage {
+public class Message {
 
     private String date;
     private String userName;
-    private String message;
+    private String content;
 
-    public ChatMessage() {
+    public Message() {
     }
 
     public String getDate() {
@@ -25,11 +25,11 @@ public class ChatMessage {
         this.userName = userName;
     }
 
-    public String getMessage() {
-        return message;
+    public String getContent() {
+        return content;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setContent(String content) {
+        this.content = content;
     }
 }

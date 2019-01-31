@@ -2,6 +2,8 @@ import {AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChil
 import {environment} from "../../environments/environment";
 import {fromEvent} from "rxjs/internal/observable/fromEvent";
 import {pairwise, switchMap, takeUntil} from "rxjs/operators";
+import * as Stomp from 'stompjs';
+import * as SockJS from 'sockjs-client';
 
 @Component({
   selector: 'app-game',
@@ -14,7 +16,6 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @Input() public width = 600;
   @Input() public height = 600;
-  @Input('messages') private messages: Message[];
 
   private isOnline: boolean = false;
   private userName: string = '';
@@ -22,11 +23,16 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   private cx: CanvasRenderingContext2D;
 
   private SOCKENT_ENDPOINT: string = environment.apiEndpoint + '/socket';
-  private READ_CHAT_ENDPOINT: string = '/app/chatMessage';
+  private READ_CHAT_ENDPOINT: string = '/app/message';
   private WRITE_CHAT_ENDPOINT: string = '/puns/message';
+  private READ_STROKE_ENDPOINT: string = '/app/stroke';
+  private WRITE_STROKE_ENDPOINT: string = '/puns/stroke';
 
-  // private stompClient: Stomp = null;
-  private chatmessages: Message[] = [];
+  private stompClient = null;
+  private canvasColour: string = '#000';
+  private canvasSize: number = 3;
+  private strokes: Stroke[] = [];
+  private messages: Message[] = [];
   private message: Message = {
     date: '',
     userName: '',
@@ -46,9 +52,9 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     canvasEl.width = this.width;
     canvasEl.height = this.height;
 
-    this.cx.lineWidth = 3;
+    this.cx.lineWidth = this.canvasSize;
     this.cx.lineCap = 'round';
-    this.cx.strokeStyle = '#000';
+    this.cx.strokeStyle = this.canvasColour;
 
     this.captureEvents(canvasEl);
   }
@@ -59,9 +65,51 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   login(): void {
-    console.log("Loign in");
     this.isOnline = true;
     this.message.userName = this.userName;
+    this.connect();
+  }
+
+  sendMessage() {
+    this.stompClient.send(
+      this.WRITE_CHAT_ENDPOINT, {},
+      JSON.stringify(this.message)
+    );
+
+    console.log(this.message);
+  }
+
+  private connect(): void {
+    const socket = new SockJS(this.SOCKENT_ENDPOINT);
+    this.stompClient = Stomp.over(socket);
+
+    const _this = this;
+    this.stompClient.connect({}, function (frame) {
+      _this.messages = [];
+      console.log('Connected: ' + frame);
+
+      _this.stompClient.subscribe(_this.READ_CHAT_ENDPOINT, function (chatMessage) {
+        _this.pushChatMessage(JSON.parse(chatMessage.body));
+      });
+       _this.stompClient.subscribe(_this.READ_STROKE_ENDPOINT, function (strokes) {
+        _this.pushStrokes(JSON.parse(strokes.body));
+      });
+    });
+  }
+
+  private disconnect(): void {
+    if (this.stompClient != null) {
+      this.stompClient.disconnect();
+    }
+  }
+
+  private pushChatMessage(message: Message): void {
+    this.messages.push(message);
+  }
+
+  private pushStrokes(stroke: Stroke): void {
+    this.strokes.push(stroke);
+    this.drawOnCanvas(stroke.colour, stroke.size, stroke.prevPoint, stroke.currentPoint);
   }
 
   private captureEvents(canvasEl: HTMLCanvasElement) {
@@ -87,58 +135,43 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
           y: res[1].clientY - rect.top
         };
 
-        this.drawOnCanvas(prevPos, currentPos);
+
+        const stroke: Stroke = {
+          colour: this.canvasColour,
+          size: this.canvasSize,
+          prevPoint: prevPos,
+          currentPoint: currentPos
+        };
+        this.strokes.push(stroke);
+
+        this.stompClient.send(
+          this.WRITE_STROKE_ENDPOINT, {},
+          JSON.stringify(stroke)
+        );
+
+        this.drawOnCanvas(this.canvasColour, this.canvasSize, prevPos, currentPos);
       });
   }
 
-  private drawOnCanvas(prevPos: { x: number, y: number }, currentPos: { x: number, y: number }) {
+  private drawOnCanvas(colour: string, size: number, prevPos: { x: number, y: number }, currentPos: { x: number, y: number }) {
     if (!this.cx) {
       return;
     }
 
+    this.cx.strokeStyle = colour;
+    this.cx.lineWidth = size;
     this.cx.beginPath();
 
     if (prevPos) {
       this.cx.moveTo(prevPos.x, prevPos.y);
       this.cx.lineTo(currentPos.x, currentPos.y);
       this.cx.stroke();
+
+
+      this.cx.lineWidth = 3;
+      this.cx.lineCap = 'round';
+      this.cx.strokeStyle = '#000';
     }
-  }
-
-  sendMessage() {
-    // this.stompClient.send(
-    //   this.WRITE_CHAT_ENDPOINT, {},
-    //   JSON.stringify(this.message)
-    // );
-
-    console.log(this.message);
-  }
-
-  private connect(): void {
-    // const socket = new SockJS(this.socketEndpoint);
-    // this.stompClient = Stomp.over(socket);
-    //
-    // const _this = this;
-    // this.stompClient.connect({}, function (frame) {
-    //   _this.chatmessages = [];
-    //   console.log('Connected: ' + frame);
-    //
-    //   _this.stompClient.subscribe(_this.READ_CHAT_ENDPOINT, function (chatMessage) {
-    //     _this.pushChatMessage(JSON.parse(chatMessage.body));
-    //   });
-    // });
-  }
-
-  private disconnect(): void {
-    // if (this.stompClient != null) {
-    //   this.stompClient.disconnect();
-    // }
-
-    console.log('Disconnected!');
-  }
-
-  private pushChatMessage(message: Message): void {
-    this.chatmessages.push(message);
   }
 }
 
@@ -146,4 +179,16 @@ export interface Message {
   date: string;
   userName: string;
   content: string;
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Stroke {
+  colour: string;
+  size: number;
+  prevPoint: Point;
+  currentPoint: Point;
 }

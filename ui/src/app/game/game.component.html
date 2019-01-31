@@ -63,28 +63,23 @@
       </div>
 
       <div class="col-lg-4">
-        <form class="form-inline" style="margin-top: 20px;">
-          <div class="form-group">
-            <label for="name">Message:</label>
-            <input type="text" id="name" name="name" class="form-control" [(ngModel)]="message.content"/>
-          </div>
-          <button id="send" class="btn btn-default" type="button" (click)="sendMessage()">Send</button>
+        <form name="mform" #mf="ngForm" (ngSubmit)="mf.form.valid && sendMessage()" novalidate>
+          <input type="text"
+                 id="content"
+                 name="content"
+                 class="form-control mb-2 mr-sm-2"
+                 [(ngModel)]="message.content"
+                 placeholder="Message"/>
         </form>
 
         <table id="conversation" class="table table-striped" style="margin-top: 20px;">
-          <thead>
-          <tr>
-            <th>Messages</th>
-          </tr>
-          </thead>
+          <thead></thead>
           <tbody *ngFor="let message of messages">
           <tr>
-            <td>{{message.userName}} {{message.content}}</td>
+            <td>{{message.userName}} : {{message.content}}</td>
           </tr>
           </tbody>
         </table>
-
-
       </div>
     </div>
   </div>
