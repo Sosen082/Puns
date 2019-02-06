@@ -4,12 +4,15 @@ import {fromEvent} from "rxjs/internal/observable/fromEvent";
 import {pairwise, switchMap, takeUntil} from "rxjs/operators";
 import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
+import {stringify} from "querystring";
+import {any} from "codelyzer/util/function";
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.css']
 })
+
 export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('canvas') public canvas: ElementRef;
@@ -19,7 +22,12 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private isOnline: boolean = false;
   private userName: string = '';
-  private password: string = 'Ryba';
+  private words: string[] = [
+    'bocian', 'morskie oko', 'kevin sam w domu', 'titanic', 'shrek', 'randka w ciemno',
+    'park jurajski', 'fast food', 'wakacje', 'lotniskowiec', 'kebab', 'koncert',
+    'skrzypce', 'bałwan', 'krokodyl', 'tańczący z wilkami', 'piękna i bestia'
+  ];
+  private password: string = '';
   private cx: CanvasRenderingContext2D;
 
   private SOCKENT_ENDPOINT: string = environment.apiEndpoint + '/socket';
@@ -27,10 +35,15 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   private WRITE_CHAT_ENDPOINT: string = '/puns/message';
   private READ_STROKE_ENDPOINT: string = '/app/stroke';
   private WRITE_STROKE_ENDPOINT: string = '/puns/stroke';
+  private READ_DRAW_ENDPOINT: string = '/app/drawing';
+  private WRITE_DRAW_ENDPOINT: string = '/app/drawing'
 
+
+  private drawing = false;
+  private allowDraw = true;
   private stompClient = null;
   private canvasColour: string = '#000';
-  private canvasSize: number = 3;
+  private canvasSize: number = 5;
   private strokes: Stroke[] = [];
   private messages: Message[] = [];
   private message: Message = {
@@ -44,6 +57,8 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
   }
+
+
 
   public ngAfterViewInit() {
     const canvasEl: HTMLCanvasElement = this.canvas.nativeElement;
@@ -75,8 +90,19 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       this.WRITE_CHAT_ENDPOINT, {},
       JSON.stringify(this.message)
     );
-
     console.log(this.message);
+  }
+
+  public allowDrawing(){
+    if(this.allowDraw == true) {
+      this.password =  this.words[Math.floor(Math.random()*this.words.length)];
+      this.drawing = true;
+      this.allowDraw = false;
+      this.stompClient.send(
+        this.WRITE_DRAW_ENDPOINT, {},
+        JSON.stringify(this.allowDraw)
+      );
+    }
   }
 
   private connect(): void {
@@ -94,6 +120,9 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
        _this.stompClient.subscribe(_this.READ_STROKE_ENDPOINT, function (strokes) {
         _this.pushStrokes(JSON.parse(strokes.body));
       });
+      _this.stompClient.subscribe(_this.READ_DRAW_ENDPOINT, function (drawing) {
+        _this.allowDraw = (JSON.parse(drawing));
+      });
     });
   }
 
@@ -102,6 +131,35 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       this.stompClient.disconnect();
     }
   }
+
+  private setBrushBlack(){
+    this.canvasColour = '#000000';
+  }
+
+  private setBrushWhite(){
+    this.canvasColour = '#FFFFFF';
+  }
+
+  private setBrushRed(){
+    this.canvasColour = '#FF0000';
+  }
+
+  private setBrushGreen(){
+    this.canvasColour = '#00FF00';
+  }
+
+  private setBrushBlue(){
+    this.canvasColour = '#0000FF';
+  }
+
+  private setBrushYellow(){
+    this.canvasColour = '#FFFF00';
+  }
+
+  private setWidth(value){
+    this.canvasSize = value;
+  }
+
 
   private pushChatMessage(message: Message): void {
     this.messages.push(message);
@@ -150,8 +208,12 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
         );
 
         this.drawOnCanvas(this.canvasColour, this.canvasSize, prevPos, currentPos);
+
+
       });
+
   }
+
 
   private drawOnCanvas(colour: string, size: number, prevPos: { x: number, y: number }, currentPos: { x: number, y: number }) {
     if (!this.cx) {
@@ -162,7 +224,7 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cx.lineWidth = size;
     this.cx.beginPath();
 
-    if (prevPos) {
+    if (prevPos && this.drawing) {
       this.cx.moveTo(prevPos.x, prevPos.y);
       this.cx.lineTo(currentPos.x, currentPos.y);
       this.cx.stroke();
@@ -174,6 +236,7 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 }
+
 
 export interface Message {
   date: string;
@@ -192,3 +255,5 @@ export interface Stroke {
   prevPoint: Point;
   currentPoint: Point;
 }
+
+
