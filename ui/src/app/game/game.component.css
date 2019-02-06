@@ -32,6 +32,63 @@ img {
 
   padding-bottom: 32px;
 }
+.colors {
+  padding: 5px;
+}
+
+.black {
+  background-color: #000000;
+  border: solid;
+  border-width: 1px;
+  position: center;
+  height: 15px;
+}
+
+.white {
+  background-color: #FFFFFF;
+  border: solid;
+  border-width: 1px;
+  position: center;
+  height: 15px;
+  margin-left: 5px;
+}
+
+.red {
+  background-color: #FF0000;
+  border: solid;
+  border-width: 1px;
+  position: center;
+  height: 15px;
+  margin-left: 5px;
+}
+
+.green {
+  background-color: #00FF00;
+  border: solid;
+  border-width: 1px;
+  position: center;
+  height: 15px;
+  margin-left: 5px;
+}
+
+.blue {
+  background-color: #0000FF;
+  border: solid;
+  border-width: 1px;
+  position: center;
+  height: 15px;
+  margin-left: 5px;
+}
+
+.yellow {
+  background-color: #FFFF00;
+  border: solid;
+  border-width: 1px;
+  position: center;
+  height: 15px;
+  margin-left: 5px;
+}
+
 
 #draw {
   display: block;
