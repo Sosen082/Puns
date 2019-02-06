@@ -58,8 +58,20 @@
   <div class="jumbotron">
     <div class="row">
       <div class="col-lg-8">
+        <input #ranger type="range" (change)="setWidth(ranger.value)" id="brush-size" min="1" max="50" value="10">
+        <div class="colors">
+          <button (click)="setBrushBlack()" id="black" class ="black" ></button>
+          <button (click)="setBrushWhite()" id="white" class ="white"></button>
+          <button (click)="setBrushRed()" id="red" class ="red"></button>
+          <button (click)="setBrushGreen()" id="green" class ="green"></button>
+          <button (click)="setBrushBlue()" id="blue" class ="blue"></button>
+          <button (click)="setBrushYellow()" id="yellow" class ="yellow"></button>
+        </div>
+      </div>
+      <div class="col-lg-8">
         <canvas #canvas id="draw"></canvas>
         <canvas #canvas></canvas>
+        <button (click)="allowDrawing()" type="button" class="btn btn-info">Draw</button>
       </div>
 
       <div class="col-lg-4">
