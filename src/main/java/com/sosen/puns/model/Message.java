@@ -32,4 +32,13 @@ public class Message {
     public void setContent(String content) {
         this.content = content;
     }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "date='" + date + '\'' +
+                ", userName='" + userName + '\'' +
+                ", content='" + content + '\'' +
+                '}';
+    }
 }
