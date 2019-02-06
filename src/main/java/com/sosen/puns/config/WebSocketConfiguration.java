@@ -13,7 +13,7 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
                 .addEndpoint("/socket")
-                .setAllowedOrigins("http://localhost:4200")
+                .setAllowedOrigins("http://localhost:3600")
                 .withSockJS();
     }
 
