@@ -27,6 +27,8 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     'park jurajski', 'fast food', 'wakacje', 'lotniskowiec', 'kebab', 'koncert',
     'skrzypce', 'bałwan', 'krokodyl', 'tańczący z wilkami', 'piękna i bestia'
   ];
+
+  private wordAnchor: string = '';
   private password: string = '';
   private cx: CanvasRenderingContext2D;
 
@@ -35,12 +37,17 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   private WRITE_CHAT_ENDPOINT: string = '/puns/message';
   private READ_STROKE_ENDPOINT: string = '/app/stroke';
   private WRITE_STROKE_ENDPOINT: string = '/puns/stroke';
-  private READ_DRAW_ENDPOINT: string = '/app/drawing';
-  private WRITE_DRAW_ENDPOINT: string = '/app/drawing'
+  private READ_DRAW_ENDPOINT: string = '/app/drawingFlag';
+  private WRITE_DRAW_ENDPOINT: string = '/puns/drawingFlag';
+  private READ_WORD_ENDPOINT: string = '/app/word';
+  private WRITE_WORD_ENDPOINT: string = '/puns/word';
+  private READ_DRAWING_ENDPOINT: string = '/app/drawing';
+  private WRITE_DRAWING_ENDPOINT: string = '/puns/drawing';
 
 
-  private drawing = false;
-  private allowDraw = true;
+  private clear = 'true';
+  private drawing = 'false';
+  private allowDraw = 'true';
   private stompClient = null;
   private canvasColour: string = '#000';
   private canvasSize: number = 5;
@@ -49,6 +56,12 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   private message: Message = {
     date: '',
     userName: '',
+    content: ''
+  };
+
+  private botMessage: Message = {
+    date: '',
+    userName: 'BOT',
     content: ''
   };
 
@@ -90,18 +103,60 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       this.WRITE_CHAT_ENDPOINT, {},
       JSON.stringify(this.message)
     );
+    if(this.message.content == this.wordAnchor){
+
+      this.guessedCorrectly();
+    }
     console.log(this.message);
   }
 
+  public guessedCorrectly()
+  {
+    this.allowDraw = 'true';
+    this.drawing = 'false';
+
+    this.stompClient.send(
+      this.WRITE_DRAW_ENDPOINT, {},
+      JSON.stringify(this.allowDraw)
+    );
+
+    this.stompClient.send(
+      this.WRITE_DRAWING_ENDPOINT, {},
+      JSON.stringify(this.drawing)
+    );
+
+    this.botMessage.content = 'Hasło odgadnięte przez ' +this.message.userName + '!';
+    this.stompClient.send(
+      this.WRITE_CHAT_ENDPOINT, {},
+      JSON.stringify(this.botMessage)
+    );
+
+
+  }
+
   public allowDrawing(){
-    if(this.allowDraw == true) {
+    if(this.allowDraw == 'true') {
       this.password =  this.words[Math.floor(Math.random()*this.words.length)];
-      this.drawing = true;
-      this.allowDraw = false;
+      this.wordAnchor = this.password;
+      this.drawing = 'true';
+      this.allowDraw = 'false';
+
       this.stompClient.send(
         this.WRITE_DRAW_ENDPOINT, {},
         JSON.stringify(this.allowDraw)
       );
+
+      this.stompClient.send(
+        this.WRITE_WORD_ENDPOINT, {},
+        JSON.stringify(this.wordAnchor)
+      );
+
+      this.botMessage.content = 'Gra rozpoczęta! Rysuje ' + this.message.userName;
+      this.stompClient.send(
+        this.WRITE_CHAT_ENDPOINT, {},
+        JSON.stringify(this.botMessage)
+      );
+
     }
   }
 
@@ -120,8 +175,16 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
        _this.stompClient.subscribe(_this.READ_STROKE_ENDPOINT, function (strokes) {
         _this.pushStrokes(JSON.parse(strokes.body));
       });
-      _this.stompClient.subscribe(_this.READ_DRAW_ENDPOINT, function (drawing) {
-        _this.allowDraw = (JSON.parse(drawing));
+      _this.stompClient.subscribe(_this.READ_DRAW_ENDPOINT, function (allowDrawing) {
+        _this.allowDraw = (JSON.parse(allowDrawing.body));
+        _this.clearCanvas();
+      });
+      _this.stompClient.subscribe(_this.READ_DRAWING_ENDPOINT, function (drawing) {
+        _this.drawing = (JSON.parse(drawing.body));
+        _this.clearCanvas();
+      });
+      _this.stompClient.subscribe(_this.READ_WORD_ENDPOINT, function (word) {
+        _this.wordAnchor = (JSON.parse(word.body));
       });
     });
   }
@@ -170,6 +233,10 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     this.drawOnCanvas(stroke.colour, stroke.size, stroke.prevPoint, stroke.currentPoint);
   }
 
+  public clearCanvas(): void {
+      this.cx.clearRect(0, 0, this.width, this.height);
+  }
+
   private captureEvents(canvasEl: HTMLCanvasElement) {
     fromEvent(canvasEl, 'mousedown')
       .pipe(
@@ -184,6 +251,7 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       )
       .subscribe((res: [MouseEvent, MouseEvent]) => {
         const rect = canvasEl.getBoundingClientRect();
+        if(this.drawing == 'true'){
         const prevPos = {
           x: res[0].clientX - rect.left,
           y: res[0].clientY - rect.top
@@ -208,12 +276,11 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
         );
 
         this.drawOnCanvas(this.canvasColour, this.canvasSize, prevPos, currentPos);
-
+      }
 
       });
 
   }
-
 
   private drawOnCanvas(colour: string, size: number, prevPos: { x: number, y: number }, currentPos: { x: number, y: number }) {
     if (!this.cx) {
@@ -224,7 +291,7 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cx.lineWidth = size;
     this.cx.beginPath();
 
-    if (prevPos && this.drawing) {
+    if (prevPos) {
       this.cx.moveTo(prevPos.x, prevPos.y);
       this.cx.lineTo(currentPos.x, currentPos.y);
       this.cx.stroke();
@@ -244,6 +311,7 @@ export interface Message {
   content: string;
 }
 
+
 export interface Point {
   x: number;
   y: number;
@@ -255,5 +323,6 @@ export interface Stroke {
   prevPoint: Point;
   currentPoint: Point;
 }
+
 
 

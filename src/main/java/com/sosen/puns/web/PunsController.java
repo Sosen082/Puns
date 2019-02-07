@@ -36,4 +36,23 @@ public class PunsController {
     public Stroke stroke(Stroke stroke) {
         return stroke;
     }
+
+    @MessageMapping("/drawingFlag")
+    @SendTo("/app/drawingFlag")
+    public String allowDraw(String allowDraw) {
+        return allowDraw;
+    }
+
+    @MessageMapping("/drawing")
+    @SendTo("/app/drawing")
+    public String Draw(String drawing) {
+        return drawing;
+    }
+
+    @MessageMapping("/word")
+    @SendTo("/app/word")
+    public String currentWord(String wordAnchor) {
+        return wordAnchor;
+    }
+
 }
